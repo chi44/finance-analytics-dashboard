@@ -1,0 +1,20 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Erzeugte Daten: entstehen jederzeit neu durch "uv run python src/run_pipeline.py"
+data/processed/
+
+# Protokolle der Pipeline-Läufe
+logs/
+
+# Große, im Projekt nicht genutzte Kursdaten (je ~50 MB, siehe README zum Download)
+data/raw/prices.csv
+data/raw/prices-split-adjusted.csv
