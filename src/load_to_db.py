@@ -25,6 +25,9 @@ PLAN = ROOT / "data" / "processed" / "plan.csv"
 SECURITIES = ROOT / "data" / "raw" / "securities.csv"
 SCHEMA = ROOT / "sql" / "schema.sql"
 DB = ROOT / "data" / "processed" / "finance.db"
+# Exporte für Power BI: So kann Power BI reine CSV-Dateien laden und braucht
+# keinen zusätzlichen ODBC-Treiber für SQLite
+POWERBI_DIR = ROOT / "data" / "processed" / "powerbi"
 
 
 def build_dim_company(securities: pd.DataFrame, tickers: pd.Series) -> pd.DataFrame:
@@ -119,6 +122,18 @@ def main() -> None:
         dim.to_sql("dim_company", conn, if_exists="append", index=False)
         fact.to_sql("fact_financials", conn, if_exists="append", index=False)
         fact_plan.to_sql("fact_plan", conn, if_exists="append", index=False)
+
+    # --- Export für Power BI --------------------------------------------------------
+    # Die Daten werden aus der Datenbank gelesen (nicht aus den DataFrames), damit Power BI
+    # exakt den geprüften Datenbankstand inkl. der Plan-Ist-Logik aus der View erhält.
+    POWERBI_DIR.mkdir(parents=True, exist_ok=True)
+    with engine.connect() as conn:
+        exports = {
+            "dim_company.csv": "SELECT * FROM dim_company",
+            "plan_vs_actual.csv": "SELECT * FROM v_plan_vs_actual",
+        }
+        for filename, query in exports.items():
+            pd.read_sql(text(query), conn).to_csv(POWERBI_DIR / filename, index=False)
 
     # --- Kontrollausgaben ---------------------------------------------------------------
     with engine.connect() as conn:
